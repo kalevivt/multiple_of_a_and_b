@@ -122,3 +122,120 @@ fn main() -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use std::fs::read_to_string;
+    use std::path::PathBuf;
+
+    use super::generate_divisible_numbers;
+    use super::is_number_divisible_by;
+    use super::LineNumbers;
+    use super::read_items;
+    use super::ResultNumbers;
+
+    fn read_result_numbers_from_file(file_path: &PathBuf) -> Result<Vec<ResultNumbers>, Box<dyn std::error::Error>> {
+        let content = read_to_string(file_path)?;
+        let lines: Vec<&str> = content.lines().collect();
+
+        let mut result_numbers_vec = Vec::new();
+
+        for line in lines {
+            let parts: Vec<&str> = line.split(':').collect();
+            let end: u32 = parts[0].parse()?;
+            let numbers: Vec<u32> = parts[1]
+                .split_whitespace()
+                .map(|num| num.parse().unwrap())
+                .collect();
+
+            result_numbers_vec.push(ResultNumbers { end, numbers });
+        }
+
+        Ok(result_numbers_vec)
+    }
+
+    #[test]
+    fn test_read_items() {
+        let input = PathBuf::from("test_data/input_2_rows.txt");
+        let items = read_items(&input).unwrap();
+        assert_eq!(items.len(), 2);
+    }
+
+    #[test]
+    fn test_is_number_divisible_by() {
+        let item = LineNumbers {
+            a: 2,
+            b: 3,
+            end: 10,
+        };
+
+        let expected_results = vec![
+            (1, false),
+            (2, true),
+            (3, true),
+            (4, true),
+            (5, false),
+            (6, true),
+            (7, false),
+            (8, true),
+            (9, true),
+            (10, true),
+        ];
+
+        for (n, expected) in expected_results {
+            assert_eq!(is_number_divisible_by(&item, &n), expected, "Failed for number {}", n);
+        }
+    }
+
+    #[test]
+    fn test_generate_divisible_numbers() {
+        // Read the expected results from the comparison file
+        let comparison_path = PathBuf::from("test_data/result_2_comparison.txt");
+        let expected_results = read_result_numbers_from_file(&comparison_path).unwrap();
+
+        // Call the function with the test input
+        let input_path = PathBuf::from("test_data/input_2_rows.txt");
+        let actual_results = generate_divisible_numbers(&input_path).unwrap();
+
+        // Compare the output with the expected results
+        assert_eq!(actual_results.len(), expected_results.len());
+        for (actual, expected) in actual_results.iter().zip(expected_results.iter()) {
+            assert!(actual == expected);
+        }
+    }
+
+    #[test]
+    fn test_read_items_incorrect_format() {
+        let input = PathBuf::from("test_data/input_incorrect_format.txt");
+        let result = read_items(&input);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_read_items_empty_file() {
+        let input = PathBuf::from("test_data/input_empty.txt");
+        let items = read_items(&input).unwrap();
+        assert!(items.is_empty());
+    }
+
+    #[test]
+    fn test_read_items_mixed_format() {
+        let input = PathBuf::from("test_data/input_mixed_format.txt");
+        let result = read_items(&input);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_generate_divisible_numbers_large_numbers() {
+        let input = PathBuf::from("test_data/input_large_numbers.txt");
+        let items = read_items(&input).unwrap();
+        assert_eq!(items.len(), 1);
+
+        let result = generate_divisible_numbers(&input).unwrap();
+
+        // Example: Test that it generates expected numbers for a large range
+        // Assuming a specific input, adjust the expected output as needed
+        let expected_numbers: Vec<u32> = (1..=100000).filter(|&n| n % 2 == 0 || n % 3 == 0).collect();
+        assert_eq!(result[0].numbers, expected_numbers);
+    }
+}
