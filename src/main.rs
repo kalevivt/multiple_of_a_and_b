@@ -84,7 +84,7 @@ fn generate_divisible_numbers(input: &PathBuf) -> Result<Vec<ResultNumbers>> {
         })
         .collect();
 
-    results.sort_by(|a, b| a.numbers.len().cmp(&numbers.len()));
+    results.sort_by(|a, b| a.numbers.len().cmp(&b.numbers.len()));
     Ok(results)
 }
 
